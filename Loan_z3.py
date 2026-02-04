@@ -1,9 +1,12 @@
 from z3 import *
 
 class Applicant:
-    def __init__(self, name, income, credit_score, requested, months, blacklisted):
+    def __init__(self, name, age, income, outstandingdebts,
+                 credit_score, requested, months, blacklisted):
         self.name = name
+        self.age = age
         self.income = income
+        self.outstandingdebts = outstandingdebts
         self.credit_score = credit_score
         self.requested = requested
         self.months = months
@@ -106,18 +109,25 @@ def loan_application(applicant):
     else:
         print("RIFIUTATO")
         if applicant.blacklisted:
-                print("Motivo: Cliente nella blacklist")
+            print("Motivo: Cliente nella blacklist")
         elif applicant.credit_score < 500:
-                print("Motivo: Credit score insufficiente")
+            print("Motivo: Credit score insufficiente")
         elif applicant.income < 1000:
-                print("Motivo: Reddito insufficiente")
+            print("Motivo: Reddito insufficiente")
         else:
-                print("Motivo: Tasso o sostenibilità non rispettati")
+            print("Motivo: Tasso o sostenibilità non rispettati")
 
 
 if __name__ == "__main__":
-    print("\n=== SISTEMA DI VALUTAZIONE PRESTITI ===\n")
+    print("\n=== LOAN VALUTATION ===\n")
     
-    print("\n--- Valutazione singola ---")
-    maria = Applicant("Maria", 2000, 750, 2000, 10, False)
+    maria = Applicant(name="Maria",
+                    age=34,
+                    income = 2000,
+                    outstandingdebts = 5353,
+                    credit_score = 750,
+                    requested = 28000,
+                    months = 100,
+                    blacklisted = False)
+    
     loan_application(maria)
