@@ -46,9 +46,11 @@ def loan_application(applicant):
         solver.add(Or(Not(is_permanent), Not(is_unemployed)))
         solver.add(Or(Not(is_temporary), Not(is_unemployed)))
     
-        solver.add(is_permanent == (applicant.typeloan == 'permanent'))
-        solver.add(is_temporary == (applicant.typeloan == 'temporary'))
-        solver.add(is_unemployed == (applicant.typeloan == 'unemployed'))
+        solver.add(is_permanent == (applicant.work == 'permanent'))
+        solver.add(is_temporary == (applicant.work == 'temporary'))
+        solver.add(is_unemployed == (applicant.work == 'unemployed'))
+
+        solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
 
         is_personal = Bool('is_personal')
         is_car = Bool('is_car')
@@ -109,7 +111,6 @@ def loan_application(applicant):
         
         solver.add(
             approved == And(
-            is_not_blacklisted,
             score_ok,
             rate_limit_ok,
             income_min_ok,
@@ -121,7 +122,7 @@ def loan_application(applicant):
 
         solver.add(Implies(Not(approved), rate == 0))
 
-        solver.add(approved)
+    solver.add(approved)
 
     if solver.check() == sat:
         model = solver.model()
@@ -146,6 +147,7 @@ def loan_application(applicant):
         print(f"Interessi totali: €{interests:.2f}")
 
     else:
+        print('\n')
         print("RIFIUTATO")
         print(f"{applicant.name}")
         if applicant.blacklisted:
@@ -166,12 +168,12 @@ maria = Applicant(name="Maria",
                     age = 54,
                     work = 'temporary',
                     income = 1500,
-                    outstandingdebts = 5503,
+                    outstandingdebts = 503,
                     credit_score = 700,
-                    requested = 1000,
+                    requested = 10000,
                     cosigner = False,
                     typeloan = 'car',
                     months = 120,
-                    blacklisted = False)
+                    blacklisted = True)
 
 loan_application(maria)
