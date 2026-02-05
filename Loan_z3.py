@@ -2,7 +2,7 @@ from z3 import *
 
 class Applicant:
     def __init__(self, name, age, income, outstandingdebts,
-                credit_score, requested,
+                credit_score, requested, cosigner,
                 typeloan, months, blacklisted):
         self.name = name
         self.age = age
@@ -10,6 +10,7 @@ class Applicant:
         self.outstandingdebts = outstandingdebts
         self.credit_score = credit_score
         self.requested = requested
+        self.cosigner = cosigner
         self.typeloan = typeloan
         self.months = months
         self.blacklisted = blacklisted
@@ -21,16 +22,20 @@ def loan_application(applicant):
     rate = Real("rate")
     monthly_payment = Real("monthly_payment")
     
+    age = RealVal(applicant.age)
     income = RealVal(applicant.income)
     score = applicant.credit_score
     months = applicant.months
- 
+    cosigner = BoolVal(applicant.cosigner)
+
     if applicant.blacklisted:
         solver.add(approved == False)
         solver.add(rate == 0)
         solver.add(monthly_payment == 0)
 
     else:
+        solver.add(Implies(age >= 75, Not(approved)))
+        solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
 
         is_personal = Bool('is_personal')
         is_car = Bool('is_car')
@@ -125,8 +130,13 @@ def loan_application(applicant):
 
     else:
         print("RIFIUTATO")
+        print(f"{applicant.name}")
         if applicant.blacklisted:
             print("Motivo: Cliente nella blacklist")
+        elif applicant.age > 75:
+            print("Motivo: Età non conforme")
+        elif applicant.age <= 25 and applicant.cosigner == False:
+            print("Motivo: mancanza di un co-firmatario")
         elif applicant.credit_score < 100:
             print("Motivo: Credit score insufficiente")
         elif applicant.income < 1000:
@@ -134,14 +144,16 @@ def loan_application(applicant):
         else:
             print("Motivo: Tasso o sostenibilità non rispettati")
 
+
 maria = Applicant(name="Maria",
-                    age = 34,
-                    income = 999,
+                    age = 23,
+                    income = 1500,
                     outstandingdebts = 553,
                     credit_score = 700,
                     requested = 1000,
-                    typeloan='car',
+                    cosigner = False,
+                    typeloan = 'car',
                     months = 100,
                     blacklisted = False)
-    
+  
 loan_application(maria)
