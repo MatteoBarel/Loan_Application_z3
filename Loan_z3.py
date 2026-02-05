@@ -51,6 +51,7 @@ def loan_application(applicant):
         solver.add(is_house == (applicant.typeloan == 'house'))
 
         solver.add(Implies(is_car, applicant.requested <= 50000))
+        solver.add(Implies(is_house, applicant.requested >= 30000))
 
         base_rate = Real("base_rate")
         solver.add(base_rate == (1000 - score) * 0.017)
@@ -146,13 +147,13 @@ def loan_application(applicant):
 
 
 maria = Applicant(name="Maria",
-                    age = 23,
+                    age = 54,
                     income = 1500,
                     outstandingdebts = 553,
                     credit_score = 700,
                     requested = 1000,
                     cosigner = False,
-                    typeloan = 'car',
+                    typeloan = 'house',
                     months = 100,
                     blacklisted = False)
   
