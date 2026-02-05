@@ -47,7 +47,6 @@ def loan_application(applicant):
 
         solver.add(Implies(is_car, applicant.requested <= 50000))
 
-
         base_rate = Real("base_rate")
         solver.add(base_rate == (1000 - score) * 0.017)
 
@@ -75,8 +74,8 @@ def loan_application(applicant):
 
         solver.add(
             monthly_payment == If(approved, 
-                                applicant.requested / months + rate/100 * applicant.requested / 12, 
-                                0)
+                        applicant.requested / months + rate/100 * applicant.requested / months, 
+                        0)
         )
         
         is_not_blacklisted = Not(BoolVal(applicant.blacklisted))
@@ -99,53 +98,49 @@ def loan_application(applicant):
         )
 
         solver.add(Implies(Not(approved), rate == 0))
-    
-    
+
+        solver.add(approved)
+
     if solver.check() == sat:
         model = solver.model()
-        is_approved = model.eval(approved)
 
-        if is_true(is_approved):
-            print("APPROVATO")
+        print("APPROVATO")
         
-            print("\n" + "="*60)
-            print(f"{applicant.name}")
-            print("="*60)
+        print(f"{applicant.name}")
         
-            r = model.eval(rate)
-            r_val = float(r.as_decimal(10).replace("?", ""))
+        r = model.eval(rate)
+        r_val = float(r.as_decimal(10).replace("?", ""))
             
-            print("APPROVATO")
-            print(f"Tasso: {r_val:.2f}%")
-            print(f"Reddito: €{applicant.income}")
-            print(f"Importo: €{applicant.requested}")
-            print(f"Credit score: {applicant.credit_score}")
+        print(f"Tasso: {r_val:.2f}%")
+        print(f"Reddito: €{applicant.income}")
+        print(f"Importo: €{applicant.requested}")
+        print(f"Credit score: {applicant.credit_score}")
             
-            mp = model.eval(monthly_payment)
-            mp_val = float(mp.as_decimal(10).replace("?", ""))
+        mp = model.eval(monthly_payment)
+        mp_val = float(mp.as_decimal(10).replace("?", ""))
             
-            print(f"Rata mensile ({months} mesi): €{mp_val:.2f}")
-            interests = mp_val *months - applicant.requested
-            print(f"Interessi totali: €{interests:.2f}")
+        print(f"Rata mensile ({months} mesi): €{mp_val:.2f}")
+        interests = mp_val *months - applicant.requested
+        print(f"Interessi totali: €{interests:.2f}")
+
+    else:
+        print("RIFIUTATO")
+        if applicant.blacklisted:
+            print("Motivo: Cliente nella blacklist")
+        elif applicant.credit_score < 100:
+            print("Motivo: Credit score insufficiente")
+        elif applicant.income < 1000:
+            print("Motivo: Reddito insufficiente")
         else:
-            print("RIFIUTATO")
-            if applicant.blacklisted:
-                print("Motivo: Cliente nella blacklist")
-            elif applicant.credit_score < 100:
-                print("Motivo: Credit score insufficiente")
-            elif applicant.income < 1000:
-                print("Motivo: Reddito insufficiente")
-            else:
-                print("Motivo: Tasso o sostenibilità non rispettati")
-
+            print("Motivo: Tasso o sostenibilità non rispettati")
 
 maria = Applicant(name="Maria",
                     age = 34,
-                    income = 1500,
+                    income = 999,
                     outstandingdebts = 553,
                     credit_score = 700,
-                    requested = 5000,
-                    typeloan='house',
+                    requested = 1000,
+                    typeloan='car',
                     months = 100,
                     blacklisted = False)
     
