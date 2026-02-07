@@ -75,7 +75,7 @@ def loan_application(applicant):
 
     solver.add(Implies(Or(is_car,is_personal), applicant.requested <= 50000))
     solver.add(Implies(is_house, applicant.requested >= 30000))
-
+    solver.add(Implies(is_car, age > 25))
 
 
     #definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
@@ -180,15 +180,15 @@ def loan_application(applicant):
 
 
 mario = Applicant(name="Mario",
-                    age = 45,
+                    age = 25,
                     work = 'permanent',
                     income = 1400,
                     networth = 10000,
-                    credit_score = 650,
-                    requested = 60000,
-                    cosigner = False,
-                    typeloan = 'house',
-                    months = 360,
+                    credit_score = 750,
+                    requested = 6000,
+                    cosigner = True,
+                    typeloan = 'car',
+                    months = 36,
                     blacklisted = False)
 
 loan_application(mario)
