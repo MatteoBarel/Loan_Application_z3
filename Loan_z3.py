@@ -28,16 +28,18 @@ def loan_application(applicant):
 
     rate = Real("rate")
     
-    age = applicant.age
+    age = RealVal(applicant.age)
     income = applicant.income
     score = applicant.credit_score
     months = applicant.months
     cosigner = BoolVal(applicant.cosigner)
-
+    networth = applicant.networth
+    requested = applicant.requested
 
     #implicazioni per l'età
 
     solver.add(Implies(age >= 75, Not(approved)))
+    solver.add(Implies(age <= 18, Not(approved)))
     solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
 
 
@@ -57,7 +59,7 @@ def loan_application(applicant):
     solver.add(is_unemployed == (applicant.work == 'unemployed'))
 
     solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
-
+    solver.add(Implies(is_unemployed, (networth/requested) >= 1))
 
     #definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
 
@@ -82,8 +84,8 @@ def loan_application(applicant):
     #definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
 
     base_rate = Real("base_rate")
-    solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.021 + 0.5*Sqrt(35-age)))
-    solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.021))
+    solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.017 + 0.2*Sqrt(35-age)))
+    solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.017))
 
 
     #abbassiamo il tasso per il mutuo
@@ -113,8 +115,8 @@ def loan_application(applicant):
     dti_adj = Real("dti_adj")
     solver.add(And(
 
-        Implies(And(Or(is_car, is_personal), applicant.requested >= 40000), dti_adj == 0.2),
-        Implies(And(Or(is_car, is_personal), applicant.requested >= 20000, applicant.requested < 40000), dti_adj == 0.1),
+        Implies(And(Or(is_car, is_personal), applicant.requested >= 40000), dti_adj == 0.1),
+        Implies(And(Or(is_car, is_personal), applicant.requested >= 20000, applicant.requested < 40000), dti_adj == 0.05),
         Implies(And(Or(is_car, is_personal), applicant.requested >= 0, applicant.requested < 20000), dti_adj == 0.0),
  
         Implies(is_house, dti_adj == 0)
@@ -182,15 +184,15 @@ def loan_application(applicant):
 
 
 mario = Applicant(name="Mario",
-                    age = 52,
-                    work = 'permanent',
-                    income = 5400,
-                    networth = 10000,
-                    credit_score = 1000,
+                    age = 21,
+                    work = 'unemployed',
+                    income = 1500,
+                    networth = 1000,
+                    credit_score = 650,
                     requested = 10000,
-                    cosigner = False,
-                    typeloan = 'car',
-                    months = 36,
+                    cosigner = True,
+                    typeloan = 'personal',
+                    months = 120,
                     blacklisted = False)
 
 loan_application(mario)
