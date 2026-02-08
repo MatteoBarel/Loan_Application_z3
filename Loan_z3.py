@@ -22,13 +22,14 @@ class Applicant:
 def loan_application(applicant):
 
     solver = Solver()
+
+    
     approved = Bool("approved")
 
     rate = Real("rate")
-    monthly_payment = Real("monthly_payment")
     
-    age = RealVal(applicant.age)
-    income = RealVal(applicant.income)
+    age = applicant.age
+    income = applicant.income
     score = applicant.credit_score
     months = applicant.months
     cosigner = BoolVal(applicant.cosigner)
@@ -73,7 +74,7 @@ def loan_application(applicant):
     solver.add(is_car == (applicant.typeloan == 'car'))
     solver.add(is_house == (applicant.typeloan == 'house'))
 
-    solver.add(Implies(Or(is_car,is_personal), applicant.requested <= 50000))
+    solver.add(Implies(Xor(is_car,is_personal), applicant.requested <= 50000))
     solver.add(Implies(is_house, applicant.requested >= 30000))
     solver.add(Implies(is_car, age > 25))
 
@@ -81,15 +82,16 @@ def loan_application(applicant):
     #definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
 
     base_rate = Real("base_rate")
-    solver.add(Implies(age <= 35, base_rate == (1000 - score) * 0.021 + 0.5*Sqrt(35-age)))
-    solver.add(Implies(age > 35, base_rate == (1000 - score) * 0.021))
+    solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.021 + 0.5*Sqrt(35-age)))
+    solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.021))
+
 
     #abbassiamo il tasso per il mutuo
 
     type_adj = Real("type_adj")
     solver.add(And(
-        Implies(is_house, type_adj == -4.5),
-        Implies(Not(is_house), type_adj == 0.0)
+        Implies(is_house, type_adj == 0.0),
+        Implies(Not(is_house), type_adj == 4.5)
     ))
 
 
@@ -98,11 +100,11 @@ def loan_application(applicant):
     income_adj = Real("income_adj")
 
     solver.add(And(
-        Implies(income >= 4500, income_adj == -0.1),
-        Implies(And(income >= 3500, income < 4500), income_adj == 0.0),
+        Implies(income >= 4500, income_adj == 0.0),
+        Implies(And(income >= 3500, income < 4500), income_adj == 0.05),
         Implies(And(income >= 2500, income < 3500), income_adj == 0.1),
-        Implies(And(income >= 2000, income < 2500), income_adj == 0.2),
-        Implies(income < 2000, income_adj == 0.3),
+        Implies(And(income >= 2000, income < 2500), income_adj == 0.15),
+        Implies(income < 2000, income_adj == 0.2),
     ))
 
 
@@ -180,13 +182,13 @@ def loan_application(applicant):
 
 
 mario = Applicant(name="Mario",
-                    age = 25,
+                    age = 52,
                     work = 'permanent',
-                    income = 1400,
+                    income = 5400,
                     networth = 10000,
-                    credit_score = 750,
-                    requested = 6000,
-                    cosigner = True,
+                    credit_score = 1000,
+                    requested = 10000,
+                    cosigner = False,
                     typeloan = 'car',
                     months = 36,
                     blacklisted = False)
