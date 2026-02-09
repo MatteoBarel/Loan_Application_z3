@@ -181,6 +181,7 @@ def loan_application(applicant):
         print(f"Rata mensile ({months} mesi): €{mp_val:.2f}")
         interests = mp_val * months - applicant.requested
         print(f"Interessi totali: €{interests:.2f}")
+        print(f"Totale dovuto: €{(interests+requested):.2f}")
 
     else:
         print('\n')
@@ -204,13 +205,13 @@ def loan_application(applicant):
 mario = Applicant(name="Mario",
                     age = 45,
                     work = 'permanent',
-                    income = 1500,
+                    income = 3500,
                     networth = 1000,
                     credit_score = 850,
-                    requested = 20000,
+                    requested = 200000,
                     cosigner = False,
-                    typeloan = 'personal',
-                    months = 120,
+                    typeloan = 'house',
+                    months = 360,
                     blacklisted = False)
 
 loan_application(mario)
