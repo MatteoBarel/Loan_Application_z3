@@ -38,14 +38,12 @@ def loan_application(applicant):
 
 
     # implicazioni per l'età
-
     solver.add(Implies(age >= 75, Not(approved)))
     solver.add(Implies(age <= 18, Not(approved)))
     solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
 
 
     # definiamo i tipi di lavoro, ogni richiedente può avere solo un tipo di lavoro
-
     is_permanent = Bool('is_permanent')
     is_temporary = Bool('is_temporary')
     is_unemployed = Bool('is_unemployed')
@@ -64,7 +62,6 @@ def loan_application(applicant):
 
 
     # definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
-
     is_personal = Bool('is_personal')
     is_car = Bool('is_car')
     is_house = Bool('is_house')
@@ -103,14 +100,12 @@ def loan_application(applicant):
 
 
     # definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
-
     base_rate = Real("base_rate")
     solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.007 + 0.2*Sqrt(35-age)))
     solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.007))
 
 
     # abbassiamo il tasso per il mutuo
-
     type_adj = Real("type_adj")
     solver.add(And(
         Implies(is_house, type_adj == 0.0),
@@ -119,7 +114,6 @@ def loan_application(applicant):
 
 
     # aggiustiamo il tasso in base alla presenza di un cofirmatario
-
     cosigner_benefit = Real("cosigner_benefit")
     solver.add(And(
         Implies(And(cosigner, age <= 30), cosigner_benefit == -0.5),
@@ -129,9 +123,7 @@ def loan_application(applicant):
 
 
     # aggiustiamo il tasso in base alle entrate
-
     income_adj = Real("income_adj")
-
     solver.add(And(
         Implies(income >= 4500, income_adj == 0.0),
         Implies(And(income >= 3500, income < 4500), income_adj == 0.05),
@@ -141,26 +133,20 @@ def loan_application(applicant):
     ))
 
 
-    # aggiustiamo il tasso in base alla richiesta
-
+    # aggiustiamo il tasso in base alla richiesta e lo stipendio
     dti_adj = Real("dti_adj")
     solver.add(And(
-
-        Implies(And(Or(is_car, is_personal), applicant.requested >= 40000), dti_adj == 0.1),
-        Implies(And(Or(is_car, is_personal), applicant.requested >= 20000, applicant.requested < 40000), dti_adj == 0.05),
-        Implies(And(Or(is_car, is_personal), applicant.requested >= 0, applicant.requested < 20000), dti_adj == 0.0),
- 
-        Implies(is_house, dti_adj == 0)
+        Implies(is_permanent, dti_adj == 0.5),
+        Implies(is_temporary, dti_adj == 0.1 + requested/(income*months)),
+        Implies(is_unemployed, dti_adj == requested/(income*months))
     ))
 
 
     # sommiamo le caratteristiche
+    solver.add(rate == If(approved, base_rate + type_adj + cosigner_benefit + income_adj + dti_adj, 0))
 
-    solver.add(rate == If(approved, base_rate + type_adj + income_adj + dti_adj, 0))
 
-
-    # rata mensile    
-
+    # rata mensile
     mp = applicant.requested / months + rate/100 * applicant.requested / 12
     
     solver.add(And(
@@ -228,18 +214,3 @@ mario = Applicant(name="Mario",
                     blacklisted = False)
 
 loan_application(mario)
-
-
-
-sarco = Applicant(name="Sarco",
-                    age = 46,
-                    work = 'permanent',
-                    income = 5500,
-                    networth = 10000,
-                    credit_score = 480,
-                    requested = 50000,
-                    cosigner = True,
-                    typeloan = 'car',
-                    months = 120,
-                    blacklisted = False)
-loan_application(sarco)
