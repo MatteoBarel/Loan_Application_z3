@@ -36,6 +36,7 @@ def loan_application(applicant):
     networth = applicant.networth
     requested = applicant.requested
 
+
     #implicazioni per l'età
 
     solver.add(Implies(age >= 75, Not(approved)))
@@ -61,6 +62,7 @@ def loan_application(applicant):
     solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
     solver.add(Implies(is_unemployed, (networth/requested) >= 1))
 
+
     #definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
 
     is_personal = Bool('is_personal')
@@ -76,16 +78,27 @@ def loan_application(applicant):
     solver.add(is_car == (applicant.typeloan == 'car'))
     solver.add(is_house == (applicant.typeloan == 'house'))
 
-    solver.add(Implies(Xor(is_car,is_personal), applicant.requested <= 50000))
+    solver.add(Implies(Xor(is_car,is_personal), applicant.requested <= 200000))
     solver.add(Implies(is_house, applicant.requested >= 30000))
     solver.add(Implies(is_car, age > 25))
+
+
+    # definiamo requisito di patrimonio minimo per prestiti elevati
+    solver.add(Implies(And(requested > 100000, Not(is_house)), 
+                      networth >= 0.5 * requested), is_permanent)
+
+
+    # vietiamo combinazioni rischiose
+    solver.add(Implies(And(age > 65, is_house, months > 180), Not(approved)))
+    solver.add(Implies(And(is_temporary, requested > 30000, Not(cosigner)), Not(approved)))
+    solver.add(Implies(And(score < 600, income < 2500, Not(cosigner)), Not(approved)))
 
 
     #definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
 
     base_rate = Real("base_rate")
-    solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.017 + 0.2*Sqrt(35-age)))
-    solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.017))
+    solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.007 + 0.2*Sqrt(35-age)))
+    solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.007))
 
 
     #abbassiamo il tasso per il mutuo
@@ -183,16 +196,32 @@ def loan_application(applicant):
             print("Motivo: Tasso o sostenibilità non rispettati")
 
 
+
 mario = Applicant(name="Mario",
-                    age = 21,
-                    work = 'unemployed',
+                    age = 45,
+                    work = 'permanent',
                     income = 1500,
                     networth = 1000,
-                    credit_score = 650,
-                    requested = 10000,
-                    cosigner = True,
+                    credit_score = 850,
+                    requested = 20000,
+                    cosigner = False,
                     typeloan = 'personal',
                     months = 120,
                     blacklisted = False)
 
 loan_application(mario)
+
+
+
+sarco = Applicant(name="Sarco",
+                    age = 46,
+                    work = 'permanent',
+                    income = 5500,
+                    networth = 10000,
+                    credit_score = 480,
+                    requested = 50000,
+                    cosigner = True,
+                    typeloan = 'car',
+                    months = 120,
+                    blacklisted = False)
+loan_application(sarco)
