@@ -37,14 +37,14 @@ def loan_application(applicant):
     requested = applicant.requested
 
 
-    #implicazioni per l'età
+    # implicazioni per l'età
 
     solver.add(Implies(age >= 75, Not(approved)))
     solver.add(Implies(age <= 18, Not(approved)))
     solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
 
 
-    #definiamo i tipi di lavoro, ogni richiedente può avere solo un tipo di lavoro
+    # definiamo i tipi di lavoro, ogni richiedente può avere solo un tipo di lavoro
 
     is_permanent = Bool('is_permanent')
     is_temporary = Bool('is_temporary')
@@ -63,7 +63,7 @@ def loan_application(applicant):
     solver.add(Implies(is_unemployed, (networth/requested) >= 1))
 
 
-    #definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
+    # definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
 
     is_personal = Bool('is_personal')
     is_car = Bool('is_car')
@@ -94,14 +94,22 @@ def loan_application(applicant):
     solver.add(Implies(And(score < 600, income < 2500, Not(cosigner)), Not(approved)))
 
 
-    #definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
+    # vincoli sulla durata in base all'età e al tipo
+    solver.add(Implies(is_house, And(months >= 60, months <= 360)))
+    solver.add(Implies(is_car, And(months >= 12, months <= 120)))
+    solver.add(Implies(is_personal, months <= 180))
+
+    solver.add(Implies(approved, age + (months/12) <= 85))
+
+
+    # definiamo il tasso base secondo lo score (è giovane viene "penalizzato")
 
     base_rate = Real("base_rate")
     solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.007 + 0.2*Sqrt(35-age)))
     solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.007))
 
 
-    #abbassiamo il tasso per il mutuo
+    # abbassiamo il tasso per il mutuo
 
     type_adj = Real("type_adj")
     solver.add(And(
@@ -110,7 +118,17 @@ def loan_application(applicant):
     ))
 
 
-    #aggiustiamo il tasso in base alle entrate
+    # aggiustiamo il tasso in base alla presenza di un cofirmatario
+
+    cosigner_benefit = Real("cosigner_benefit")
+    solver.add(And(
+        Implies(And(cosigner, age <= 30), cosigner_benefit == -0.5),
+        Implies(And(cosigner, age > 30), cosigner_benefit == -0.3),
+        Implies(Not(cosigner), cosigner_benefit == 0.0)
+    ))
+
+
+    # aggiustiamo il tasso in base alle entrate
 
     income_adj = Real("income_adj")
 
@@ -123,7 +141,7 @@ def loan_application(applicant):
     ))
 
 
-    #aggiustiamo il tasso in base alla richiesta
+    # aggiustiamo il tasso in base alla richiesta
 
     dti_adj = Real("dti_adj")
     solver.add(And(
@@ -136,12 +154,12 @@ def loan_application(applicant):
     ))
 
 
-    #sommiamo le caratteristiche
+    # sommiamo le caratteristiche
 
     solver.add(rate == If(approved, base_rate + type_adj + income_adj + dti_adj, 0))
 
 
-    #rata mensile    
+    # rata mensile    
 
     mp = applicant.requested / months + rate/100 * applicant.requested / 12
     
