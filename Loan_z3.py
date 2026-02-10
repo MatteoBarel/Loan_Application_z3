@@ -21,11 +21,10 @@ class Applicant:
 
 def loan_application(applicant):
 
-    solver = Solver()
+    solver = Solver()                   # inizializzazione del solver
 
-    
-    approved = Bool("approved")
-    rate = Real("rate")
+    approved = Bool("approved")         # variabile dell'approvazione che il solver in z3 deve determinare
+    rate = Real("rate")                 # variabile per il tasso che il solver in z3 deve calcolare
     
     age = applicant.age
     cosigner = applicant.cosigner
@@ -42,19 +41,20 @@ def loan_application(applicant):
     solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
 
 
-    # definiamo i tipi di lavoro, ogni richiedente può avere solo un tipo di lavoro
+    # definizione i tipi di lavoro: ogni richiedente può avere solo un tipo di lavoro
     is_permanent = Bool('is_permanent')
     is_temporary = Bool('is_temporary')
     is_unemployed = Bool('is_unemployed')
 
-    solver.add(Or(is_permanent, is_temporary, is_unemployed))
-    solver.add(Or(Not(is_permanent), Not(is_temporary)))
-    solver.add(Or(Not(is_permanent), Not(is_unemployed)))
-    solver.add(Or(Not(is_temporary), Not(is_unemployed)))
+    solver.add(Or(is_permanent, is_temporary, is_unemployed))   # |   almeno deve essere vera
+    solver.add(Or(Not(is_permanent), Not(is_temporary)))        # |   non possono essere vere entrambi
+    solver.add(Or(Not(is_permanent), Not(is_unemployed)))       # |   non possono essere vere entrambi
+    solver.add(Or(Not(is_temporary), Not(is_unemployed)))       # |   non possono essere vere entrambi
 
     solver.add(is_permanent == (applicant.work == 'permanent'))
     solver.add(is_temporary == (applicant.work == 'temporary'))
     solver.add(is_unemployed == (applicant.work == 'unemployed'))
+
 
     solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
     solver.add(Implies(is_unemployed, (networth/requested) >= 1))
@@ -65,10 +65,10 @@ def loan_application(applicant):
     is_car = Bool('is_car')
     is_house = Bool('is_house')
 
-    solver.add(Or(is_personal, is_car, is_house))
-    solver.add(Or(Not(is_personal), Not(is_car)))
-    solver.add(Or(Not(is_personal), Not(is_house)))
-    solver.add(Or(Not(is_car), Not(is_house)))
+    solver.add(Or(is_personal, is_car, is_house))           # |   almeno una deve essere vera
+    solver.add(Or(Not(is_personal), Not(is_car)))           # |   non possono essere vere entrambi
+    solver.add(Or(Not(is_personal), Not(is_house)))         # |   non possono essere vere entrambi
+    solver.add(Or(Not(is_car), Not(is_house)))              # |   non possono essere vere entrambi
 
     solver.add(is_personal == (applicant.typeloan == 'personal'))
     solver.add(is_car == (applicant.typeloan == 'car'))
