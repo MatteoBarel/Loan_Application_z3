@@ -25,14 +25,13 @@ def loan_application(applicant):
 
     
     approved = Bool("approved")
-
     rate = Real("rate")
     
-    age = RealVal(applicant.age)
+    age = applicant.age
+    cosigner = applicant.cosigner
     income = applicant.income
     score = applicant.credit_score
     months = applicant.months
-    cosigner = BoolVal(applicant.cosigner)
     networth = applicant.networth
     requested = applicant.requested
 
@@ -143,7 +142,7 @@ def loan_application(applicant):
 
 
     # sommiamo le caratteristiche
-    solver.add(rate == If(approved, base_rate + type_adj + cosigner_benefit + income_adj + dti_adj, 0))
+    solver.add(rate ==  base_rate + type_adj + cosigner_benefit + income_adj + dti_adj)
 
 
     # rata mensile
