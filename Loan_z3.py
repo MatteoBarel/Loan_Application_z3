@@ -81,8 +81,8 @@ def loan_application(applicant):
 
 
     # definiamo requisito di patrimonio minimo per prestiti elevati
-    solver.add(Implies(And(requested > 100000, Not(is_house)), 
-                      networth >= 0.5 * requested), is_permanent)
+    solver.add(Implies(And(requested > 100000, Not(is_house), 
+                      networth >= 0.5 * requested), is_permanent))
 
 
     # vietiamo combinazioni rischiose
@@ -136,9 +136,9 @@ def loan_application(applicant):
     # aggiustiamo il tasso in base alla richiesta e lo stipendio
     dti_adj = Real("dti_adj")
     solver.add(And(
-        Implies(is_permanent, dti_adj == 0.5),
-        Implies(is_temporary, dti_adj == 0.1 + requested/(income*months)),
-        Implies(is_unemployed, dti_adj == requested/(income*months))
+        Implies(is_permanent, dti_adj == 0.0),
+        Implies(is_temporary, dti_adj == requested/(income*months)),
+        Implies(is_unemployed, dti_adj == 0.2 + requested/(income*months))
     ))
 
 
@@ -203,15 +203,15 @@ def loan_application(applicant):
 
 
 mario = Applicant(name="Mario",
-                    age = 45,
-                    work = 'permanent',
-                    income = 3500,
-                    networth = 1000,
+                    age = 40,
+                    work = 'temporary',
+                    income = 1500,
+                    networth = 100000,
                     credit_score = 850,
-                    requested = 200000,
-                    cosigner = False,
+                    requested = 60000,
+                    cosigner = True,
                     typeloan = 'house',
-                    months = 360,
+                    months = 240,
                     blacklisted = False)
 
 loan_application(mario)
