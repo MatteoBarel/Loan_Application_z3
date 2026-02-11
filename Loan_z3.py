@@ -203,6 +203,7 @@ def loan_application(applicant):
             print("Motivo: Tasso o sostenibilità non rispettati")
 
 
+# dati del candidato
 
 mario = Applicant(name="Mario",
                     age = 40,
