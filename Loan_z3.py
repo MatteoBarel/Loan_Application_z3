@@ -35,29 +35,19 @@ def loan_application(applicant):
     requested = applicant.requested
 
 
-    # implicazioni per l'età
-    solver.add(Implies(age >= 75, Not(approved)))
-    solver.add(Implies(age <= 18, Not(approved)))
-    solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
-
-
     # definizione i tipi di lavoro: ogni richiedente può avere solo un tipo di lavoro
     is_permanent = Bool('is_permanent')
     is_temporary = Bool('is_temporary')
     is_unemployed = Bool('is_unemployed')
 
+    solver.add(is_permanent == (applicant.work == 'permanent'))         # |   se e solo se
+    solver.add(is_temporary == (applicant.work == 'temporary'))         # |   assegnamo T o F alle variabili
+    solver.add(is_unemployed == (applicant.work == 'unemployed'))       # |   se e solo se
+
     solver.add(Or(is_permanent, is_temporary, is_unemployed))   # |   almeno deve essere vera
     solver.add(Or(Not(is_permanent), Not(is_temporary)))        # |   non possono essere vere entrambi
     solver.add(Or(Not(is_permanent), Not(is_unemployed)))       # |   non possono essere vere entrambi
     solver.add(Or(Not(is_temporary), Not(is_unemployed)))       # |   non possono essere vere entrambi
-
-    solver.add(is_permanent == (applicant.work == 'permanent'))         # |
-    solver.add(is_temporary == (applicant.work == 'temporary'))         # |   assegnamo T o F alle variabili
-    solver.add(is_unemployed == (applicant.work == 'unemployed'))       # | 
-
-
-    solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
-    solver.add(Implies(is_unemployed, (networth/requested) >= 1))
 
 
     # definiamo i tipi di prestito richiesto (al più uno per richiedente) e le condizioni
@@ -65,15 +55,28 @@ def loan_application(applicant):
     is_car = Bool('is_car')
     is_house = Bool('is_house')
 
+    solver.add(is_personal == (applicant.typeloan == 'personal'))       # |
+    solver.add(is_car == (applicant.typeloan == 'car'))                 # |   assegnazione T o F alle variabili
+    solver.add(is_house == (applicant.typeloan == 'house'))             # |
+
     solver.add(Or(is_personal, is_car, is_house))           # |   almeno una deve essere vera
     solver.add(Or(Not(is_personal), Not(is_car)))           # |   non possono essere vere entrambi
     solver.add(Or(Not(is_personal), Not(is_house)))         # |   non possono essere vere entrambi
     solver.add(Or(Not(is_car), Not(is_house)))              # |   non possono essere vere entrambi
 
-    solver.add(is_personal == (applicant.typeloan == 'personal'))       # |
-    solver.add(is_car == (applicant.typeloan == 'car'))                 # |   assegnazione T o F alle variabili
-    solver.add(is_house == (applicant.typeloan == 'house'))             # |
 
+    # implicazioni per l'età
+    solver.add(Implies(age >= 75, Not(approved)))
+    solver.add(Implies(age <= 18, Not(approved)))
+    solver.add(Implies(And(age <= 25, Not(cosigner)), Not(approved)))
+
+
+    # implicazioni per il tipo di lavoro
+    solver.add(Implies(Xor(is_unemployed,is_temporary), cosigner))
+    solver.add(Implies(And(is_unemployed,Not(cosigner)), (networth >= requested)))
+
+
+    # 
     solver.add(Implies(Xor(is_car,is_personal), applicant.requested <= 200000))     
     solver.add(Implies(is_house, applicant.requested >= 30000))
     solver.add(Implies(is_car, age > 25))
@@ -100,6 +103,7 @@ def loan_application(applicant):
 
     # definizione del tasso base secondo lo score (è giovane viene "penalizzato")
     base_rate = Real("base_rate")
+    solver.add(score <= 1000)
     solver.add(Implies(age <= 35, base_rate == 1 + (1000 - score) * 0.007 + 0.2*Sqrt(35-age)))
     solver.add(Implies(age > 35, base_rate == 1 + (1000 - score) * 0.007))
 
