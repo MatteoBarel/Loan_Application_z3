@@ -141,7 +141,7 @@ def loan_application(applicant):
     solver.add(And(
         Implies(is_permanent, dti_adj == 0.0),
         Implies(is_temporary, dti_adj == requested/(income*months)),
-        Implies(is_unemployed, dti_adj == 0.2 + requested/(income*months))
+        Implies(is_unemployed, dti_adj == 1)
     ))
 
 
