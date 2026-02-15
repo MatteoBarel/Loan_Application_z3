@@ -169,56 +169,122 @@ def loan_application(applicant):
 
         print("APPROVATO")
         
-        print(f"{applicant.name}")
+        print(f"{applicant.name}\n")
         
         # estrazione del valore del tasso, con conversione da valore di z3 a python
         r = model.eval(rate)                  
         r_val = float(r.as_decimal(10).replace("?", ""))
-            
-        print(f"Tasso: {r_val:.2f}%")
-        print(f"Reddito: €{income}")
-        print(f"Importo: €{requested}")
-        print(f"Credit score: {applicant.credit_score}")
         
         # estrazione del valore della rata mensile, con conversione da valore di z3 a python
         mp = model.eval(mp)
         mp_val = float(mp.as_decimal(10).replace("?", ""))
             
-        print(f"Rata mensile ({months} mesi): €{mp_val:.2f}")
-        interests = mp_val * months - requested
-        print(f"Interessi totali: €{interests:.2f}")
-        print(f"Totale dovuto: €{(interests+requested):.2f}")
+        total_interests = mp_val * months - requested
 
+        return {
+            'approved': True,
+            'rate': r_val,
+            'monthly_payment': mp_val,
+            'total_interests': total_interests,
+            'total_due': total_interests + requested
+        }
     else:
-        print('\n')
-        print("RIFIUTATO")
-        print(f"{applicant.name}")
-        if applicant.blacklisted:
-            print("Motivo: Cliente nella blacklist")
-        elif applicant.age > 75:
-            print("Motivo: Età non conforme")
-        elif applicant.age <= 25 and applicant.cosigner == False:
-            print("Motivo: mancanza di un co-firmatario")
-        elif applicant.credit_score < 100:
-            print("Motivo: Credit score insufficiente")
-        elif applicant.income < 1000:
-            print("Motivo: Reddito insufficiente")
+        return None
+
+
+
+def portfolio_decision_problem(applicants, budget, target_profit):
+    
+    loan_results = []
+    for i, app in enumerate(applicants):
+        result = loan_application(app)
+        loan_results.append(result)
+    
+    solver = Solver()
+    n = len(applicants)
+    
+    selected = []
+    for i in range(n):
+        selected.append(Bool(f"select_{i}"))
+    
+    costs = [Real(f"cost_{i}") for i in range(n)]
+    profits = [Real(f"profit_{i}") for i in range(n)]
+    
+    for i in range(n):
+        
+        if loan_results[i] is None:
+            solver.add(Not(selected[i]))
+            solver.add(costs[i] == 0)
+            solver.add(profits[i] == 0)
+        
         else:
-            print("Motivo: Tasso o sostenibilità non rispettati")
+            solver.add(Implies(selected[i], costs[i] == applicants[i].requested))
+            solver.add(Implies(Not(selected[i]), costs[i] == 0))
+            
+            solver.add(Implies(selected[i], profits[i] == loan_results[i]['total_interests']))
+            solver.add(Implies(Not(selected[i]), profits[i] == 0))
+    
+    
+    total_cost = Sum(costs)
+    solver.add(total_cost <= budget)
+    
+    total_profit = Sum(profits)
+    solver.add(total_profit >= target_profit)
+    
+    
+    if solver.check() == sat:
+        model = solver.model()
+        
+        total_investment = 0
+        total_profit_actual = 0
+        count = 0
+        
+        print(f"SELEZIONATI")
 
+        for i in range(n):
+            if model.eval(selected[i]):
+                app = applicants[i]
+                result = loan_results[i]
+                
+                count += 1
+                total_investment += app.requested
+                total_profit_actual += result['total_interests']
+                
+                print(f"{app.name}")
+                print(f"   Importo: €{app.requested:,.2f}")
+                print(f"   Tasso: {result['rate']:.2f}%")
+                print(f"   Profitto: €{result['total_interests']:,.2f}\n")
+        
+        print(f"  Prestiti selezionati: {count}/{n}")
+        print(f"  Capitale investito: €{total_investment:,.2f} <= €{budget:,.2f} ✓")
+        print(f"  Profitto totale: €{total_profit_actual:,.2f} >= €{target_profit:,.2f} ✓")
 
-# dati del candidato
+        return True
+    
+    else:
+        print("Nessuna soluzione possibile")
+        return False
+    
 
-mario = Applicant(name="Mario",
-                    age = 40,
-                    work = 'temporary',
-                    income = 1500,
-                    networth = 100000,
-                    credit_score = 850,
-                    requested = 60000,
-                    cosigner = True,
-                    typeloan = 'house',
-                    months = 240,
-                    blacklisted = False)
+applicants = [
+    Applicant(name="Mario",
+                age=40, work='permanent', income=1500, networth=80000,
+                credit_score=750, requested=50000, cosigner=False,
+                typeloan='house', months=180, blacklisted=False),
+    
+    Applicant(name="Luigi",
+                age=30, work='permanent', income=4000, networth=50000,
+                credit_score=800, requested=30000, cosigner=False,
+                typeloan='car', months=60, blacklisted=False),
+    
+    Applicant(name="Anna",
+                age=35, work = 'permanent', income=1800, networth=20000,
+                credit_score=780, requested=30000, cosigner=True,
+                typeloan='personal', months=180, blacklisted=False),
+]
 
-loan_application(mario)
+solution_exists = portfolio_decision_problem(
+    applicants, 
+    budget = 120000, 
+    target_profit = 50000
+)
