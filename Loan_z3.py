@@ -188,49 +188,60 @@ def loan_application(applicant):
             'total_interests': total_interests,
             'total_due': total_interests + requested
         }
+    
     else:
         return None
 
 
-
 def portfolio_decision_problem(applicants, budget, target_profit):
-    
+
+    solver = Solver()       # inizializzazione del solver
+
+
+    # risultati per ogni richiedente e salvati nella lista
     loan_results = []
     for i, app in enumerate(applicants):
         result = loan_application(app)
         loan_results.append(result)
-    
-    solver = Solver()
+
     n = len(applicants)
     
+    # creazione delle variabili per riconoscere la selezionabilità del richiedente
     selected = []
     for i in range(n):
         selected.append(Bool(f"select_{i}"))
     
-    costs = [Real(f"cost_{i}") for i in range(n)]
-    profits = [Real(f"profit_{i}") for i in range(n)]
+    # creazione delle variabili per il costo di ogni prestito
+    costs = []
+    for i in range(n):
+        costs.append(Real(f"cost_{i}"))
+
+    # creazione delle variabili per il profitto di ogni prestito
+    profits = []
+    for i in range(n):
+        profits.append(Real(f"profit_{i}"))
     
     for i in range(n):
-        
-        if loan_results[i] is None:
+        # se non è approvabile si setta tutto a 0
+        if loan_results[i] is None:                     
             solver.add(Not(selected[i]))
             solver.add(costs[i] == 0)
             solver.add(profits[i] == 0)
-        
         else:
+            # se selezionato il costo sarà = alla richiesta del prestito, altrimenti 0
             solver.add(Implies(selected[i], costs[i] == applicants[i].requested))
             solver.add(Implies(Not(selected[i]), costs[i] == 0))
-            
+            # se selezionato il profitto sarà = al profitto del prestito, altrimenti 0
             solver.add(Implies(selected[i], profits[i] == loan_results[i]['total_interests']))
             solver.add(Implies(Not(selected[i]), profits[i] == 0))
     
-    
+    # il capitale prestato deve essere inferiore al budget
     total_cost = Sum(costs)
     solver.add(total_cost <= budget)
     
+    # il profitto deve superare la soglia target
     total_profit = Sum(profits)
     solver.add(total_profit >= target_profit)
-    
     
     if solver.check() == sat:
         model = solver.model()
@@ -239,7 +250,7 @@ def portfolio_decision_problem(applicants, budget, target_profit):
         total_profit_actual = 0
         count = 0
         
-        print(f"SELEZIONATI")
+        print(f"SELEZIONATI:")
 
         for i in range(n):
             if model.eval(selected[i]):
@@ -255,9 +266,8 @@ def portfolio_decision_problem(applicants, budget, target_profit):
                 print(f"   Tasso: {result['rate']:.2f}%")
                 print(f"   Profitto: €{result['total_interests']:,.2f}\n")
         
-        print(f"  Prestiti selezionati: {count}/{n}")
-        print(f"  Capitale investito: €{total_investment:,.2f} <= €{budget:,.2f} ✓")
-        print(f"  Profitto totale: €{total_profit_actual:,.2f} >= €{target_profit:,.2f} ✓")
+        print(f"  Capitale investito: €{total_investment:,.2f} <= €{budget:,.2f}")
+        print(f"  Profitto totale: €{total_profit_actual:,.2f} >= €{target_profit:,.2f}")
 
         return True
     
