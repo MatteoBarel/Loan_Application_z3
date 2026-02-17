@@ -267,8 +267,8 @@ def portfolio_decision_problem(applicants, budget, target_profit):
                 print(f"   Tasso: {result['rate']:.2f}%")
                 print(f"   Profitto: €{result['total_interests']:,.2f}\n")
         
-        print(f"  Capitale investito: €{total_investment:,.2f} <= €{budget:,.2f}")
-        print(f"  Profitto totale: €{total_profit_actual:,.2f} >= €{target_profit:,.2f}")
+        print(f"Capitale investito: €{total_investment:,.2f} <= €{budget:,.2f}")
+        print(f"Profitto totale: €{total_profit_actual:,.2f} >= €{target_profit:,.2f}")
 
         return True
     
@@ -292,6 +292,22 @@ applicants = [
                 age=35, work = 'permanent', income=1800, networth=20000,
                 credit_score=780, requested=30000, cosigner=True,
                 typeloan='personal', months=180, blacklisted=False),
+
+    Applicant(name="Anna",
+            age=35, work = 'permanent', income=1800, networth=20000,
+            credit_score=780, requested=30000, cosigner=True,
+            typeloan='personal', months=180, blacklisted=False),
+
+    Applicant(name="Anna",
+                age=35, work = 'permanent', income=1800, networth=20000,
+                credit_score=780, requested=30000, cosigner=True,
+                typeloan='personal', months=180, blacklisted=False),
+                
+    Applicant(name="Anna",
+                age=35, work = 'permanent', income=1800, networth=20000,
+                credit_score=780, requested=30000, cosigner=True,
+                typeloan='personal', months=180, blacklisted=False),
+
 ]
 
 solution_exists = portfolio_decision_problem(
