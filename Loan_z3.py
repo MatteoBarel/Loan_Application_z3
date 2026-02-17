@@ -140,7 +140,7 @@ def loan_application(applicant):
     dti_adj = Real("dti_adj")
     solver.add(And(
         Implies(is_permanent, dti_adj == 0.0),
-        Implies(is_temporary, dti_adj == requested/(income*months)),
+        Implies(is_temporary, dti_adj == requested/((income+1000)*months)),
         Implies(is_unemployed, dti_adj == 1)
     ))
 
@@ -278,10 +278,10 @@ def portfolio_decision_problem(applicants, budget, target_profit):
     
 
 applicants = [
-    Applicant(name="Mario",
+    Applicant(name="Maria",
                 age=40, work='permanent', income=1500, networth=80000,
                 credit_score=750, requested=50000, cosigner=False,
-                typeloan='house', months=180, blacklisted=False),
+                typeloan='house', months=240, blacklisted=False),
     
     Applicant(name="Luigi",
                 age=30, work='permanent', income=4000, networth=50000,
@@ -289,29 +289,43 @@ applicants = [
                 typeloan='car', months=60, blacklisted=True),
     
     Applicant(name="Anna",
-                age=35, work = 'permanent', income=1800, networth=20000,
+                age=35, work = 'permanent', income=1900, networth=20000,
                 credit_score=780, requested=30000, cosigner=True,
                 typeloan='personal', months=180, blacklisted=False),
 
-    Applicant(name="Anna",
-            age=35, work = 'permanent', income=1800, networth=20000,
-            credit_score=780, requested=30000, cosigner=True,
-            typeloan='personal', months=180, blacklisted=False),
+    Applicant(name="Gianni",
+            age=58, work = 'temporary', income=1500, networth=40000,
+            credit_score=810, requested=15000, cosigner=True,
+            typeloan='car', months=120, blacklisted=False),
 
-    Applicant(name="Anna",
-                age=35, work = 'permanent', income=1800, networth=20000,
-                credit_score=780, requested=30000, cosigner=True,
-                typeloan='personal', months=180, blacklisted=False),
-                
-    Applicant(name="Anna",
-                age=35, work = 'permanent', income=1800, networth=20000,
-                credit_score=780, requested=30000, cosigner=True,
-                typeloan='personal', months=180, blacklisted=False),
+    Applicant(name="Davide",
+                age=35, work = 'unemployed', income=0, networth=100000,
+                credit_score=880, requested=5000, cosigner=True,
+                typeloan='personal', months=60, blacklisted=False),
 
+    Applicant(name="Giovanna",
+                age=29, work = 'permanent', income=1800, networth=50000,
+                credit_score=750, requested=50000, cosigner=False,
+                typeloan='house', months=180, blacklisted=False),
+    
+    Applicant(name="Antonio",
+        age=58, work = 'permanent', income=6200, networth=200000,
+        credit_score=810, requested=500000, cosigner=True,
+        typeloan='house', months=240, blacklisted=False),
+
+    Applicant(name="Marianna",
+                age=47, work = 'permanent', income=3500, networth=60000,
+                credit_score=820, requested=100000, cosigner=True,
+                typeloan='house', months=360, blacklisted=False),
+
+    Applicant(name="Marco",
+                age=21, work = 'temporary', income=1400, networth=5000,
+                credit_score=800, requested=15000, cosigner=True,
+                typeloan='car', months=60, blacklisted=False),
 ]
 
 solution_exists = portfolio_decision_problem(
     applicants, 
-    budget = 120000, 
-    target_profit = 50000
+    budget = 550000, 
+    target_profit = 220000
 )
