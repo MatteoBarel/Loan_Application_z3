@@ -167,8 +167,7 @@ def loan_application(applicant):
     if solver.check() == sat:    # verifica che esista una soluzione
         model = solver.model()   # se è sat il modello restituisce i valori approved e rate
 
-        print("APPROVATO")
-        
+        print("APPROVATO:")
         print(f"{applicant.name}\n")
         
         # estrazione del valore del tasso, con conversione da valore di z3 a python
@@ -190,13 +189,14 @@ def loan_application(applicant):
         }
     
     else:
+        print("NON APPROVATO:")
+        print(f"{applicant.name}\n")
         return None
 
 
 def portfolio_decision_problem(applicants, budget, target_profit):
 
     solver = Solver()       # inizializzazione del solver
-
 
     # risultati per ogni richiedente e salvati nella lista
     loan_results = []
@@ -243,8 +243,9 @@ def portfolio_decision_problem(applicants, budget, target_profit):
     total_profit = Sum(profits)
     solver.add(total_profit >= target_profit)
     
-    if solver.check() == sat:
-        model = solver.model()
+
+    if solver.check() == sat:   # verifica che esista una soluzione
+        model = solver.model()  # se è sat il modello restituisce i selezionati
         
         total_investment = 0
         total_profit_actual = 0
@@ -285,7 +286,7 @@ applicants = [
     Applicant(name="Luigi",
                 age=30, work='permanent', income=4000, networth=50000,
                 credit_score=800, requested=30000, cosigner=False,
-                typeloan='car', months=60, blacklisted=False),
+                typeloan='car', months=60, blacklisted=True),
     
     Applicant(name="Anna",
                 age=35, work = 'permanent', income=1800, networth=20000,
